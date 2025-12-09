@@ -65,8 +65,7 @@ export default {
       userId: "",
       selecionadas: [],
       // Categorias
-      opcoes: ['tecnologia', 'saúde', 'negócios', 'natureza', 'política'], 
-      
+      opcoes: ['tecnologia', 'saude', 'negocios', 'natureza', 'politica'],
       logado: false,
       noticias: [],
       erro: ""
