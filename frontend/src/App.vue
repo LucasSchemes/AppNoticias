@@ -60,7 +60,7 @@ export default {
   data() {
     return {
       // VAPID PUBLIC KEY
-      publicKey: "BJuvu6hmr3W8zFcOTob8ZgU6TnC6BtIwdFImQTJK8MvPG0XFlqQVqIqrXGMZGg74I6TwXJ5EwyQZEV850PQXFog", 
+      publicKey: "BNBvVa8gacdP1D7CPP7-1lJpy73FndzRC4UNW247yrRtXgPzscJGVWPuYLcfdmG14HSwrW4zVjrNFblgKBDN8GA", 
       
       userId: "",
       selecionadas: [],
@@ -117,7 +117,7 @@ export default {
         const sub = await this.getSubscription();
 
         // Envia para o Backend (Login/Cadastro implicito)
-        const res = await fetch("http://localhost:3000/api/login", {
+        const res = await fetch("/api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -146,7 +146,7 @@ export default {
     async salvarPreferencias() {
       // Envia categorias selecionadas para o servidor
       try {
-        await fetch("http://localhost:3000/api/preferencias", {
+        await fetch("/api/preferencias", {
           method: "POST",
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({
@@ -164,7 +164,7 @@ export default {
     async carregarNoticias() {
       // Busca notícias filtradas pelo backend baseada no ID do usuário
       try {
-        const res = await fetch(`http://localhost:3000/api/noticias/${this.userId}`);
+        const res = await fetch(`/api/noticias/${this.userId}`);
         if(res.ok) {
           this.noticias = await res.json();
         }
