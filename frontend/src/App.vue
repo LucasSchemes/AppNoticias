@@ -38,6 +38,7 @@
 
       <div class="news-feed">
         <h3>Últimas Notícias</h3>
+        
         <button @click="carregarNoticias" class="btn-refresh">Atualizar</button>
 
         <div v-if="noticias.length === 0" class="empty-state">
@@ -47,7 +48,10 @@
         <div v-for="(n, index) in noticias" :key="index" class="news-card">
           <span class="badge" :class="n.categoria">{{ n.categoria }}</span>
           <p class="news-content">{{ n.conteudo }}</p>
-          <small class="news-date">Recebido agora</small>
+          
+          <small class="news-date">
+            {{ new Date(n.data).toLocaleString() }}
+          </small>
         </div>
       </div>
 
@@ -59,12 +63,11 @@
 export default {
   data() {
     return {
-      // VAPID PUBLIC KEY
+      // Modifique a chave quando for criada uma nova chave VAPID
       publicKey: "BNBvVa8gacdP1D7CPP7-1lJpy73FndzRC4UNW247yrRtXgPzscJGVWPuYLcfdmG14HSwrW4zVjrNFblgKBDN8GA", 
       
       userId: "",
       selecionadas: [],
-      // Categorias
       opcoes: ['tecnologia', 'saude', 'negocios', 'natureza', 'politica'],
       logado: false,
       noticias: [],
@@ -72,8 +75,8 @@ export default {
     };
   },
 
+  // Verifica se já existe usuário salvo no localStorage
   async mounted() {
-    // Verifica se já estava logado
     const salvo = localStorage.getItem("userId");
     if (salvo) {
       this.userId = salvo;
@@ -85,7 +88,7 @@ export default {
   methods: {
     capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); },
 
-    // Converte chave VAPID para formato aceito pelo navegador
+    // Converte chave pública VAPID de base64 para Uint8Array
     urlB64ToUint8Array(base64String) {
       const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
       const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -93,14 +96,18 @@ export default {
       return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
     },
 
-    // Registra Service Worker e Pede Permissão de Notificação
+    // Registra service worker e obtém inscrição para push
     async getSubscription() {
+      // Verifica suporte a service workers
       if (!("serviceWorker" in navigator)) return null;
 
+      // Registra service worker
       const reg = await navigator.serviceWorker.register("/service-worker.js");
       await navigator.serviceWorker.ready;
-
+      
+      // Obtém inscrição existente
       let sub = await reg.pushManager.getSubscription();
+      // Se não existir, cria nova inscrição
       if (!sub) {
         sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
@@ -110,28 +117,27 @@ export default {
       return sub;
     },
 
+    // Realiza login ou cadastro do usuário
     async entrar() {
       this.erro = "";
       try {
-        // Obtém subscription do Push
+        // Obtém inscrição para push
         const sub = await this.getSubscription();
-
-        // Envia para o Backend (Login/Cadastro implicito)
+        // Envia dados ao servidor
         const res = await fetch("/api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             userId: this.userId,
-            subscription: sub // Envia a inscrição para o servidor salvar
+            subscription: sub
           })
         });
 
         if (res.ok) {
           const data = await res.json();
           this.logado = true;
-          // Se o servidor retornar as categorias salvas, salva localmente
+          // Carrega categorias salvas se houver
           if(data.categorias) this.selecionadas = data.categorias;
-          
           localStorage.setItem("userId", this.userId);
           this.carregarNoticias();
         } else {
@@ -143,9 +149,10 @@ export default {
       }
     },
 
+    // Salva as preferências de categorias do usuário
     async salvarPreferencias() {
-      // Envia categorias selecionadas para o servidor
       try {
+        // Envia categorias selecionadas ao servidor
         await fetch("/api/preferencias", {
           method: "POST",
           headers: {'Content-Type': 'application/json'},
@@ -155,15 +162,16 @@ export default {
           })
         });
         alert("Preferências salvas! Você receberá notícias dessas categorias.");
-        this.carregarNoticias(); // Recarrega feed
+        this.carregarNoticias(); // Atualiza notícias após salvar
       } catch (e) {
         alert("Erro ao salvar preferências.");
       }
     },
 
+    // Filtra e carrega notícias do servidor
     async carregarNoticias() {
-      // Busca notícias filtradas pelo backend baseada no ID do usuário
       try {
+        // Solicita notícias ao servidor
         const res = await fetch(`/api/noticias/${this.userId}`);
         if(res.ok) {
           this.noticias = await res.json();
@@ -199,7 +207,17 @@ header { text-align: center; margin-bottom: 20px; }
 .btn-primary { background: var(--primary); color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem;}
 .btn-action { background: var(--dark); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%;}
 .btn-small { background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-.btn-refresh { background: transparent; border: 1px solid #ccc; padding: 5px 10px; cursor: pointer; margin-bottom: 10px; border-radius: 4px;}
+
+.btn-refresh { 
+    background: #ffffff; 
+    color: #000000; 
+    border: 1px solid #ccc; 
+    padding: 5px 10px; 
+    cursor: pointer; 
+    margin-bottom: 10px; 
+    border-radius: 4px;
+    font-weight: bold;
+}
 
 .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 
