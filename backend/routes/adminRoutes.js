@@ -8,7 +8,7 @@ const webpush = require("../config/webpush");
 router.post("/publicar", async (req, res) => {
     const { categoria, conteudo } = req.body;
 
-    console.log(`📢 Admin publicando em [${categoria}]: ${conteudo}`);
+    console.log(`Admin publicando em [${categoria}]: ${conteudo}`);
 
     const novaNoticia = new Noticia({ categoria, conteudo });
     await novaNoticia.save();
